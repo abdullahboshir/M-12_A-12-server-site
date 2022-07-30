@@ -5,6 +5,7 @@ require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
+
 // middle ware 
 app.use(cors());
 app.use(express.json());
@@ -17,7 +18,13 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
  try{
 
-    const productServiceCollection = client.db('PartsZone').collection('products');
+    const productServiceCollection = client.db('parts_zone').collection('products');
+
+    const userProfileCollection = client.db('parts_zone').collection('profile');
+
+    const userReviewsCollection = client.db('parts_zone').collection('reviews');
+
+    console.log(productServiceCollection)
 
     // get parts 
     app.get('/products', async(req, res) => {
@@ -34,8 +41,20 @@ async function run() {
         const update = await productServiceCollection.findOne(query);
         res.send(update)
 
-    })
+    });
 
+
+    app.post('/profile', async(req, res) => {
+       const updateUser = req.body;
+       const setUpdate = await userProfileCollection.insertOne(updateUser);
+       res.send(setUpdate)
+    })  
+
+    app.get('/profile', async(req, res) => {
+        const query = {};
+        const curesor = await userProfileCollection.find(query).toArray();
+        res.send(curesor)
+    });
 
  }
  finally{
