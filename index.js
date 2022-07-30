@@ -16,50 +16,78 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 
 async function run() {
- try{
+    try {
 
-    const productServiceCollection = client.db('parts_zone').collection('products');
+        const productServiceCollection = client.db('parts_zone').collection('products');
 
-    const userProfileCollection = client.db('parts_zone').collection('profile');
+        const userProfileCollection = client.db('parts_zone').collection('profile');
 
-    const userReviewsCollection = client.db('parts_zone').collection('reviews');
+        const userReviewsCollection = client.db('parts_zone').collection('reviews');
 
-    console.log(productServiceCollection)
+        console.log(productServiceCollection)
 
-    // get parts 
-    app.get('/products', async(req, res) => {
-        const query = {};
-        const cursor = productServiceCollection.find(query);
-        const result = await cursor.toArray();
-        res.send(result);
-    });
-
-
-    app.get('/products/:id', async(req, res) => {
-        const id = req.params.id;
-        const query = {_id: ObjectId(id)}
-        const update = await productServiceCollection.findOne(query);
-        res.send(update)
-
-    });
+        // get parts 
+        app.get('/products', async (req, res) => {
+            const query = {};
+            const cursor = productServiceCollection.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
 
 
-    app.post('/profile', async(req, res) => {
-       const updateUser = req.body;
-       const setUpdate = await userProfileCollection.insertOne(updateUser);
-       res.send(setUpdate)
-    })  
+        app.get('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const update = await productServiceCollection.findOne(query);
+            res.send(update)
 
-    app.get('/profile', async(req, res) => {
-        const query = {};
-        const curesor = await userProfileCollection.find(query).toArray();
-        res.send(curesor)
-    });
+        });
 
- }
- finally{
 
-}
+        app.post('/profile', async (req, res) => {
+            const updateUser = req.body;
+            const setUpdate = await userProfileCollection.insertOne(updateUser);
+            res.send(setUpdate)
+        })
+
+        app.get('/profile', async (req, res) => {
+            const query = {};
+            const curesor = await userProfileCollection.find(query).toArray();
+            res.send(curesor)
+        });
+
+
+        app.get('/profile/:profileUser', async(req, res) => {
+            const email = req.params.profileUser;
+            const query = {profileUser: (email)}
+           const update = await userProfileCollection.findOne(query);
+            res.send(update)
+        })
+
+
+       app.put('/profile/:profileUser', async(req, res) => {
+        const email = req.params.profileUser;
+        const updatedUser = req.body;
+        const filter = {profileUser: (email)};
+        const options = {upsert: true};
+        const updatedDoc = {
+            $set: {
+                updateEducation: updatedUser.updateEducation,
+                updateLocation: updatedUser.updateLocation,
+                socialLink: updatedUser.socialLink,
+                UpdateUrl: updatedUser.UpdateUrl,
+                profileUser: updatedUser.profileUser
+            }
+        };
+        const result = await userProfileCollection.updateOne(filter, updatedDoc, options);
+        res.send(result)
+       })
+
+    }
+    
+    finally {
+
+    }
 }
 
 
