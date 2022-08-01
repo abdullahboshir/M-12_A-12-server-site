@@ -57,34 +57,46 @@ async function run() {
         });
 
 
-        app.get('/profile/:profileUser', async(req, res) => {
+        app.get('/profile/:profileUser', async (req, res) => {
             const email = req.params.profileUser;
-            const query = {profileUser: (email)}
-           const update = await userProfileCollection.findOne(query);
+            const query = { profileUser: (email) }
+            const update = await userProfileCollection.findOne(query);
             res.send(update)
         })
 
 
-       app.put('/profile/:profileUser', async(req, res) => {
-        const email = req.params.profileUser;
-        const updatedUser = req.body;
-        const filter = {profileUser: (email)};
-        const options = {upsert: true};
-        const updatedDoc = {
-            $set: {
-                updateEducation: updatedUser.updateEducation,
-                updateLocation: updatedUser.updateLocation,
-                socialLink: updatedUser.socialLink,
-                UpdateUrl: updatedUser.UpdateUrl,
-                profileUser: updatedUser.profileUser
-            }
-        };
-        const result = await userProfileCollection.updateOne(filter, updatedDoc, options);
-        res.send(result)
-       })
+        // app.put('/profile/:profileUser', async (req, res) => {
+        //     const email = req.params.profileUser;
+        //     const updatedUser = req.body;
+        //     const filter = { profileUser: (email) };
+        //     const options = { upsert: true };
+        //     const updatedDoc = {
+        //         $set: {
+        //             updateEducation: updatedUser.updateEducation,
+        //             updateLocation: updatedUser.updateLocation,
+        //             socialLink: updatedUser.socialLink,
+        //             UpdateUrl: updatedUser.UpdateUrl,
+        //             profileUser: updatedUser.profileUser
+        //         }
+        //     };
+        //     const result = await userProfileCollection.updateOne(filter, updatedDoc, options);
+        //     res.send(result)
+        // });
 
+
+        app.get('/reviews', async(req, res) => {
+            const query = {};
+            const cursor = await userReviewsCollection.find(query).toArray();
+            res.send(cursor)
+        })
+
+        app.post('/reviews', async (req, res) => {
+            const query = req.body;
+            const setPost = await userReviewsCollection.insertOne(query);
+            res.send(setPost)
+        })
     }
-    
+
     finally {
 
     }
