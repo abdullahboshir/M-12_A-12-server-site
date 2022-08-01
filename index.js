@@ -19,10 +19,9 @@ async function run() {
     try {
 
         const productServiceCollection = client.db('parts_zone').collection('products');
-
         const userProfileCollection = client.db('parts_zone').collection('profile');
-
         const userReviewsCollection = client.db('parts_zone').collection('reviews');
+        const userOrderInformation = client.db('parts_zone').collection('orderInformation');
 
         console.log(productServiceCollection)
 
@@ -84,6 +83,8 @@ async function run() {
         // });
 
 
+        // for Customer reviews 
+
         app.get('/reviews', async(req, res) => {
             const query = {};
             const cursor = await userReviewsCollection.find(query).toArray();
@@ -94,7 +95,22 @@ async function run() {
             const query = req.body;
             const setPost = await userReviewsCollection.insertOne(query);
             res.send(setPost)
+        });
+
+
+        // User order information 
+        app.post('/userOrderData', async (req, res) => {
+            const order = req.body;
+            const orderData = await userOrderInformation.insertOne(order);
+            res.send(orderData)
+        });
+
+        app.get('/userOrderData', async(req, res) => {
+            const query = {};
+            const loadOrderData = await userOrderInformation.find(query).toArray();
+            res.send(loadOrderData)
         })
+
     }
 
     finally {
