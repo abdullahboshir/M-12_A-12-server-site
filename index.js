@@ -43,6 +43,7 @@ async function run() {
         });
 
 
+
         app.post('/profile', async (req, res) => {
             const updateUser = req.body;
             const setUpdate = await userProfileCollection.insertOne(updateUser);
@@ -54,6 +55,7 @@ async function run() {
             const curesor = await userProfileCollection.find(query).toArray();
             res.send(curesor)
         });
+
 
 
         app.get('/profile/:profileUser', async (req, res) => {
@@ -83,7 +85,7 @@ async function run() {
         // });
 
 
-        // for Customer reviews 
+        // post and get Customer reviews 
 
         app.get('/reviews', async(req, res) => {
             const query = {};
@@ -98,17 +100,27 @@ async function run() {
         });
 
 
-        // User order information 
+
+        // Post, get and delete User order information 
         app.post('/userOrderData', async (req, res) => {
             const order = req.body;
             const orderData = await userOrderInformation.insertOne(order);
             res.send(orderData)
         });
 
+
         app.get('/userOrderData', async(req, res) => {
             const query = {};
             const loadOrderData = await userOrderInformation.find(query).toArray();
             res.send(loadOrderData)
+        });
+
+       
+        app.delete('/userOrderData/:id', async(req, res) => {
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)};
+            const result = await userOrderInformation.deleteOne(query);
+            res.send(result)
         })
 
     }
