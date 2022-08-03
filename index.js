@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
@@ -15,6 +16,24 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
+function verifyJWT (req, res, next){
+    const authHeader = req.headers.authorizaton;
+    if(!authHeader){
+       return res.status(401).send({message: 'UnAuthorized access'});
+    }
+    const token = authHeader.split(' ')[1]
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded) {
+        if(err){
+            return res.status(403).send({message: 'Forbidden access'})
+        }
+       res.decoded = decoded;
+       console.log(decoded)
+       next()
+      });
+      
+}
+
+
 async function run() {
     try {
 
@@ -22,8 +41,24 @@ async function run() {
         const userProfileCollection = client.db('parts_zone').collection('profile');
         const userReviewsCollection = client.db('parts_zone').collection('reviews');
         const userOrderInformation = client.db('parts_zone').collection('orderInformation');
+        const userCollection = client.db('parts_zone').collection('users');
 
-        console.log(productServiceCollection)
+
+
+
+        app.put('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({ result, token })
+        })
+
 
         // get parts 
         app.get('/products', async (req, res) => {
@@ -87,7 +122,7 @@ async function run() {
 
         // post and get Customer reviews 
 
-        app.get('/reviews', async(req, res) => {
+        app.get('/reviews', async (req, res) => {
             const query = {};
             const cursor = await userReviewsCollection.find(query).toArray();
             res.send(cursor)
@@ -109,16 +144,31 @@ async function run() {
         });
 
 
-        app.get('/userOrderData', async(req, res) => {
+        // app.get('/userOrderData', verifyJWT, async (req, res) => {
+        //     const cutomerEmail = req.query.cutomerEmail; 
+        //     const decodedEmail = req.decoded?.email;
+        //     console.log('error', decodedEmail, order)
+        //     const query = {cutomerEmail: cutomerEmail};
+        //     const loadOrderData = await userOrderInformation.find(query).toArray();
+        //     res.send(loadOrderData)
+        // });
+
+
+        app.get('/userOrderData', verifyJWT, async (req, res) => {
+            const cutomerEmail = req.query.cutomerEmail; 
+                const decodedEmail = req.decoded?.email;
+                console.log('error', decodedEmail, cutomerEmail)
             const query = {};
             const loadOrderData = await userOrderInformation.find(query).toArray();
             res.send(loadOrderData)
         });
 
-       
-        app.delete('/userOrderData/:id', async(req, res) => {
+
+
+
+        app.delete('/userOrderData/:id', async (req, res) => {
             const id = req.params.id;
-            const query = {_id: ObjectId(id)};
+            const query = { _id: ObjectId(id) };
             const result = await userOrderInformation.deleteOne(query);
             res.send(result)
         })
