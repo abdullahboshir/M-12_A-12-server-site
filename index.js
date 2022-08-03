@@ -59,7 +59,7 @@ async function run() {
            else{
             res.status(403).send({message: 'Forbidden'})
            }
-        })
+        });
 
 app.get('/admin/:email', async(req, res) => {
     const email = req.params.email;
