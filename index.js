@@ -17,7 +17,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 
 function verifyJWT (req, res, next){
-    const authHeader = req.headers.authorizaton;
+    const authHeader = req.headers.authorization;
     if(!authHeader){
        return res.status(401).send({message: 'UnAuthorized access'});
     }
@@ -26,8 +26,7 @@ function verifyJWT (req, res, next){
         if(err){
             return res.status(403).send({message: 'Forbidden access'})
         }
-       res.decoded = decoded;
-       console.log(decoded)
+       req.decoded = decoded;
        next()
       });
       
@@ -45,6 +44,30 @@ async function run() {
 
 
 
+        app.put('/users/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const requitester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({email: requitester})
+           if(requesterAccount.role === 'admin'){
+            const filter = { email: email };
+            const updateDoc = {
+                $set: {role: 'admin'}
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send( result )
+           }
+           else{
+            res.status(403).send({message: 'Forbidden'})
+           }
+        })
+
+app.get('/admin/:email', async(req, res) => {
+    const email = req.params.email;
+    const user = await userCollection.findOne({email: email});
+    const isAdmin = user?.role === 'admin';
+    res.send({Admin : isAdmin})
+    console.log(email)
+})
 
         app.put('/users/:email', async (req, res) => {
             const email = req.params.email;
@@ -57,6 +80,11 @@ async function run() {
             const result = await userCollection.updateOne(filter, updateDoc, options);
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
             res.send({ result, token })
+        })
+
+        app.get('/users', verifyJWT, async(req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users)
         })
 
 
@@ -123,8 +151,7 @@ async function run() {
         // post and get Customer reviews 
 
         app.get('/reviews', async (req, res) => {
-            const query = {};
-            const cursor = await userReviewsCollection.find(query).toArray();
+            const cursor = await userReviewsCollection.find().toArray();
             res.send(cursor)
         })
 
@@ -157,7 +184,7 @@ async function run() {
         app.get('/userOrderData', verifyJWT, async (req, res) => {
             const cutomerEmail = req.query.cutomerEmail; 
                 const decodedEmail = req.decoded?.email;
-                console.log('error', decodedEmail, cutomerEmail)
+                // console.log('error', decodedEmail, cutomerEmail)
             const query = {};
             const loadOrderData = await userOrderInformation.find(query).toArray();
             res.send(loadOrderData)
